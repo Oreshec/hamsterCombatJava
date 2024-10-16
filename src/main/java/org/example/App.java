@@ -27,7 +27,7 @@ public class App {
 
 
 class Key {
-    private String key; // Изменяем на String
+    private final String key; // Изменяем на String
 
     Key(String key) {
         this.key = key;
@@ -40,6 +40,7 @@ class Key {
 
 
 class Check {
+    //Проверка на наличие ключей :\
     static void keys(String[] keys) {
         if (keys == null || keys.length == 0) {
             System.out.println("Нет ключей авторизации.");
@@ -59,6 +60,21 @@ class User {
     }
 }
 
+class Request {
+    static void post(String url, String key) {
+        HttpResponse<JsonNode> response = Unirest.post(url)
+                .header("Content-Type", "application/json")
+                .header("User-Agent", "insomnia/10.0.0")
+                .header("Authorization", key)
+                .asJson();
+
+        if (response.getStatus() != 200) {
+            System.out.println("Ошибка: " + response.getStatus());
+        } else {
+            System.out.println("Ответ: " + response.getBody().toString());
+        }
+    }
+}
 
 class FetchData {
     static String url;
@@ -66,38 +82,16 @@ class FetchData {
     static void sync(String key) {
         Check.keys(User.getAuthorization());
         url = "https://api.hamsterkombatgame.io/interlude/sync";
+        Request.post(url, key);
         System.out.println("Sync: " + key);
-        HttpResponse<JsonNode> response = Unirest.post(url)
-                .header("Content-Type", "application/json")
-                .header("User-Agent", "insomnia/10.0.0")
-                .header("Authorization", key)
-                .asJson();
-
-        if (response.getStatus() != 200) {
-            System.out.println("Ошибка: " + response.getStatus());
-        } else {
-            System.out.println("Ответ: " + response.getBody().toString());
-        }
-
     }
 
     static void upgradeList(String key) {
         // Итерация по каждому ключу для отправки запросов
         Check.keys(User.getAuthorization());
         url = "https://api.hamsterkombatgame.io/interlude/upgrades-for-buy";
+        Request.post(url, key);
         System.out.println("upgradeList: " + key);
-        HttpResponse<JsonNode> response = Unirest.post(url)
-                .header("Content-Type", "application/json")
-                .header("User-Agent", "insomnia/10.0.0")
-                .header("Authorization", key)
-                .asJson();
-
-        if (response.getStatus() != 200) {
-            System.out.println("Ошибка: " + response.getStatus());
-        } else {
-            System.out.println("Ответ: " + response.getBody().toString());
-        }
-
     }
 }
 
