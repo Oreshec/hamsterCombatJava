@@ -11,7 +11,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class App {
     public static void main(String[] args) {
@@ -42,6 +44,14 @@ class Card {
     private int totalCooldownSeconds;
 
     // Геттеры и сеттеры для каждого поля
+    public float getPayback() {
+        // Проверяем, чтобы profitPerHour был больше нуля, иначе возможна ошибка деления на ноль
+        if (profitPerHour > 0) {
+            return price / profitPerHour;
+        } else {
+            return Float.MAX_VALUE; // Если прибыль на час 0 или отрицательная, возвращаем "бесконечность"
+        }
+    }
 
     public String getId() {
         return id;
@@ -150,7 +160,7 @@ class Card {
 
 
 class Key {
-    private final String key; // Изменяем на String
+    private final String key;
 
     Key(String key) {
         this.key = key;
@@ -210,17 +220,12 @@ class User {
     }
 }
 
+
 class Request {
     static JsonNode post(String url, String key) {
-        HttpResponse<JsonNode> response = Unirest.post(url)
-                .header("Content-Type", "application/json")
-                .header("User-Agent", "insomnia/10.0.0")
-                .header("Authorization", key)
-                .asJson();
+        HttpResponse<JsonNode> response = Unirest.post(url).header("Content-Type", "application/json").header("User-Agent", "insomnia/10.0.0").header("Authorization", key).asJson();
 
-        if (response.getStatus() != 200) {
-            System.out.println("Ошибка: " + response.getStatus());
-        }
+        System.out.println("Status: " + response.getStatus());
         return response.getBody();
     }
 }
@@ -231,7 +236,6 @@ class FetchData {
     static void sync(String key) {
         url = "https://api.hamsterkombatgame.io/interlude/sync";
         JsonNode data = Request.post(url, key);
-
         // Поиск разной инфы
         if (data.getObject().has("interludeUser")) {
             JSONObject interludeUser = data.getObject().getJSONObject("interludeUser");
@@ -243,13 +247,15 @@ class FetchData {
             } else {
                 System.out.println("Ключ 'balanceDiamonds' не найден в ответе.");
             }
-            // Получение ID
+
+            // Получение userID
             if (interludeUser.has("id")) {
                 User.setId(interludeUser.getString("id"));
                 System.out.println("ID: " + User.getId());
             } else {
                 System.out.println("Ключ 'id' не найден в ответе.");
             }
+
             // Получение заработка в секунду
             if (interludeUser.has("earnPassivePerSec")) {
                 User.setEarnPassivePerSec(interludeUser.getFloat("earnPassivePerSec"));
@@ -257,6 +263,7 @@ class FetchData {
             } else {
                 System.out.println("Ключ 'earnPassivePerSec' не найден в ответе.");
             }
+            System.out.println("\n");
 
         } else {
             System.out.println("Ключ 'interludeUser' не найден в ответе.");
@@ -264,7 +271,6 @@ class FetchData {
     }
 
     static void upgradeList(String key) {
-        // Итерация по каждому ключу для отправки запросов
         url = "https://api.hamsterkombatgame.io/interlude/upgrades-for-buy";
         JsonNode data = Request.post(url, key);
         if (data.getObject().has("upgradesForBuy")) {
@@ -276,14 +282,26 @@ class FetchData {
             }.getType();
 
             List<Card> upgradesList = gson.fromJson(User.getUpgrades(), upgradeListType);
+            // Фильтрация списка карт, чтобы level не превышал maxLevel и maxLevel не был равен 0
+            upgradesList = upgradesList.stream().filter(card -> card.getMaxLevel() == 0 || card.getLevel() < card.getMaxLevel()) // Пропускаем карты с maxLevel = 0
+                    .collect(Collectors.toList());
 
-            // Теперь вы можете работать с объектами Upgrade
-            for (Card card : upgradesList) {
+            //Сортировка по окупаемости "цена / заработок"
+            upgradesList.sort(Comparator.comparing((Card card) -> card.getPrice() / card.getProfitPerHour()));
+
+            // Ограничение до 5 элементов
+            List<Card> limitedList = upgradesList.size() > 5 ? upgradesList.subList(0, 5) : upgradesList;
+
+            for (Card card : limitedList) {
                 System.out.println("ID: " + card.getId());
                 System.out.println("Name: " + card.getName());
+                System.out.println("Available: " + card.isAvailable());
+                System.out.println("Expired: " + card.isExpired());
                 System.out.println("Price: " + card.getPrice());
                 System.out.println("Profit per hour: " + card.getProfitPerHour());
                 System.out.println("Max level: " + card.getMaxLevel());
+                System.out.println("level: " + card.getLevel());
+                System.out.println("Payback period: " + card.getPayback());
                 System.out.println("--------");
             }
         } else {
@@ -293,9 +311,11 @@ class FetchData {
 }
 
 class Json {
+    static String pathFile = "conf.json";
+
     public static String[] readJson() {
         try {
-            File file = new File("conf.json"); // путь к файлу
+            File file = new File(pathFile); // путь к файлу
             FileReader reader = new FileReader(file);
             Type keyListType = new TypeToken<List<Key>>() {
             }.getType();
@@ -312,7 +332,6 @@ class Json {
                 return new String[0]; // Возвращаем пустой массив
             }
         } catch (Exception e) {
-            System.out.println("Ошибка чтения JSON: " + e.getMessage());
             e.printStackTrace();
             return new String[0];
         }
