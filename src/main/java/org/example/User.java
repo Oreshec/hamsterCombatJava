@@ -2,7 +2,6 @@ package org.example;
 
 class User {
     private static String[] authorizationKeys;
-    private static String upgrades;
     private static float balanceDiamonds;
     private static String id;
     private static float earnPassivePerSec;

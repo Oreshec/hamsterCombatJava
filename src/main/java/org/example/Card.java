@@ -22,7 +22,7 @@ class Card {
         if (profitPerHour > 0) {
             return price / profitPerHourDelta;
         } else {
-            return Float.MAX_VALUE; // Если прибыль на час 0 или отрицательная, возвращаем "бесконечность"
+            return Float.MIN_VALUE;
         }
     }
 
