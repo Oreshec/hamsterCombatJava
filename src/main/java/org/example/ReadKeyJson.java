@@ -7,8 +7,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class ReadKeyJson {
+    private static final Logger LOGGER = Logger.getLogger(ReadKeyJson.class.getName());
     public static String[] readJson(String pathFile) {
         try {
             File file = new File(pathFile); // путь к файлу
@@ -27,7 +30,7 @@ class ReadKeyJson {
                 return new String[0]; // Возвращаем пустой массив
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE,"Ключ не найден " + e.getMessage(), e);
             return new String[0];
         }
     }
