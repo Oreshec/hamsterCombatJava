@@ -29,6 +29,16 @@
     <dependencies>
 
         <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>20</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>20</version>
+        </dependency>
+        <dependency>
             <groupId>com.konghq</groupId>
             <artifactId>unirest-java-core</artifactId>
         </dependency>

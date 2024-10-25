@@ -43,7 +43,7 @@ class Request {
     // Получение списка карт
     public JsonNode cardListRequest() {
         String url = "https://api.hamsterkombatgame.io/interlude/upgrades-for-buy";
-        System.out.println("Сбор информации по картам: " + url);
+        System.out.println("Gathering information on cards: " + url);
         return __post(url);
     }
 
