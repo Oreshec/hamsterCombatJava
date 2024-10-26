@@ -24,20 +24,20 @@ class FetchData {
     }
 
     public void syncInfo() {
-        try {
-            Request request = new Request(this.key);
-            JsonNode data = request.sync();
-            JSONObject interludeUser = data.getObject()
-                    .optJSONObject("interludeUser");
-            fetchBalance(interludeUser);
-            fetchUserId(interludeUser);
-            fetchPassiveIncome(interludeUser);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Ключ 'interludeUser' не найден в ответе." + e.getMessage(), e);
+        Request request = new Request(this.key);
+        JsonNode data = request.sync();
+        JSONObject interludeUser = data.getObject().optJSONObject("interludeUser");
+
+        if (interludeUser == null) {
+            System.out.println("Ключ 'interludeUser' не найден в ответе.");
+            return;
         }
+        System.out.println("\n===USER===");
+        fetchBalance(interludeUser);
+        fetchUserId(interludeUser);
+        fetchPassiveIncome(interludeUser);
     }
-    
-    
+
     private void fetchBalance(JSONObject interludeUser) {
         try {
             interludeUser.has("balanceDiamonds");
@@ -64,20 +64,24 @@ class FetchData {
             User.setEarnPassivePerSec(interludeUser.getFloat("earnPassivePerSec"));
             System.out.println("earnPassivePerSec: " + User.getEarnPassivePerSec());
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Ключ 'earnPassivePerSec' не найден в ответе." + e.getMessage(), e);
+            LOGGER.log(Level.WARNING, "Key 'earnPassivePerSec' not found in the response." + e.getMessage(), e);
         }
     }
 
     // Информация по картам
     public List<Card> cardList() {
+        JSONArray upgradeArr = new JSONArray();
         Request request = new Request(this.key);
-        JsonNode data = request.cardListRequest();
-        JSONArray upgradeArr = data.getObject().optJSONArray("upgradesForBuy");
-        if (upgradeArr == null) {
-            System.out.println("Ключ 'upgradesForBuy' не найден в ответе.");
-            return List.of();  // Return an empty list instead of null
+        try {
+            JsonNode data = request.cardListRequest();
+            upgradeArr = data.getObject().optJSONArray("upgradesForBuy");
+
+        } catch (NullPointerException e) {
+            LOGGER.log(Level.SEVERE, "null data" + e.getMessage(), e);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Unknown error" + e.getMessage(), e);
         }
-        LOGGER.info("cardList upgradeArr:" + upgradeArr);
+
         return parseAndFilterCards(upgradeArr);
     }
 

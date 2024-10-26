@@ -10,37 +10,45 @@ public class App {
     private static final Logger LOGGER = Logger.getLogger(App.class.getName());
     static boolean PRINT_INFO = false;
 
-
     public static void main(String[] args) {
-        
         // Инициализация и загрузка ключей из файла
-        
-        LOGGER.info("Чтение паролей JSON");
         User.setAuthorization(ReadKeyJson.readJson("conf.json"));
         // Отправка запросов
         while (true) {
             try {
-                LOGGER.info("Перебор массива паролей");
+                LOGGER.info("Brute force through an array of passwords");
                 int minCooldown = 60;
                 for (String key : User.getAuthorization()) {
+
                     FetchData data = new FetchData(key);
                     Request req = new Request(key);
-                    LOGGER.info("Загрузка syncInfo");
-                    System.out.println("===USER===");
+
+                    LOGGER.info("Loading syncInfo");
                     data.syncInfo();
                     LOGGER.info("Загрузка syncInfo прошла");
-                    List<Integer> cooldownArr = new ArrayList<>();
-                    LOGGER.info("Загрузка App.data.main(card.List())");
+
+                    LOGGER.info("Loading App.data.main(card.List())");
                     List<Card> cardList = data.cardList();
-                    LOGGER.info("App.main.cardList: " + cardList.toString());
+                    if (cardList == null || cardList.isEmpty()) {
+                        LOGGER.warning("cardList is null or empty for the key");
+                        continue; // Пропуск текущей итерации и переход к следующему ключу
+                    }
+
+                    LOGGER.info("App.main.cardList: " + cardList.stream().limit(5).toList());
+
+                    List<Integer> cooldownArr = new ArrayList<>();
                     for (Card card : cardList) {
                         if (card.getPrice() <= User.getBalanceDiamonds()) {
                             cooldownArr.add(card.getCooldownSeconds());
                         }
                     }
                     LOGGER.info("cooldownArr: " + cooldownArr);
-                    minCooldown = Collections.min(cooldownArr);
-                    
+                    if (!cooldownArr.isEmpty()) {
+                        minCooldown = Collections.min(cooldownArr);
+                    } else {
+                        minCooldown = 60;
+                    }
+
                     if (PRINT_INFO) {
                         for (Card card : cardList) {
                             System.out.println("===CARD===");
@@ -59,16 +67,16 @@ public class App {
                     }
                     req.UpgradeCard(cardList);
                 }
-                
+
                 int sleepTime = Math.min(minCooldown * 1000, 3 * 60 * 60 * 1000);
-                
+
                 long second = (sleepTime / 1000) % 60;
                 long minute = (sleepTime / (1000 * 60)) % 60;
                 long hours = (sleepTime / (1000 * 60 * 60)) % 24;
-                
+
                 String formatedTime = String.format("H.%02d:M.%02d:S.%02d", hours, minute, second);
-                LOGGER.log(Level.INFO, "Сон на " + "\"" + formatedTime + "\"");
-                
+                LOGGER.log(Level.INFO, "Sleep at " + "\"" + formatedTime + "\"");
+
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
                 LOGGER.log(Level.SEVERE, "InterruptedException" + e.getMessage(), e);

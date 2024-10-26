@@ -22,19 +22,23 @@ class Request {
     // Выполнение POST запросов с опциональным телом
     private JsonNode __post(String url, String body) {
         try {
-            HttpResponse<JsonNode> response = Unirest.post(url).header("Content-Type", "application/json").header("User-Agent", "insomnia/10.0.0").header("Authorization", key).body(body != null ? body : "").asJson();
-            
-            LOGGER.info("Status: " + response.getStatus() + " for " + url);
+            HttpResponse<JsonNode> response = Unirest.post(url)
+                    .header("Content-Type", "application/json")
+                    .header("User-Agent", "insomnia/10.0.0")
+                    .header("Authorization", key)
+                    .body(body != null ? body : "")
+                    .asJson();
+
+            LOGGER.log(Level.INFO, "Status: " + response.getStatus() + " for " + url);
 
             if (response.getStatus() >= 200 && response.getStatus() < 300) {
                 return response.getBody();
             } else {
-                
-                LOGGER.warning("Non-success status code: " + response.getStatus() + " for URL: " + url);
+                LOGGER.log(Level.WARNING, "Non-success status code: " + response.getStatus() + " for URL: " + url);
                 return null; // Return null on error
             }
         } catch (Exception e) {
-            LOGGER.warning("Request failed for URL: " + url + e);
+            LOGGER.log(Level.SEVERE, "Request failed for URL: " + url + e.getMessage(), e);
             return null; // Return null on failure
         }
     }
@@ -73,23 +77,22 @@ class Request {
         Gson gson = new Gson();
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         System.out.println("===CARD===");
-        int i = 0;
-        try {
-            for (Card card : data) {
-                System.out.print(i++ + ".");
+        int i = 1;
+        for (Card card : data) {
+            try {
+                System.out.print(i++ + ". ");
                 if (card.getCooldownSeconds() == 0) {
                     System.out.println("Cooldown on the " + card.getName() + " is missing.");
                     if (card.isAvailable() && !card.isExpired()) {
                         if (User.getBalanceDiamonds() > card.getPrice()) {
                             __ResponseCard resp = new __ResponseCard(card.getId(), timestamp.getTime());
                             String json = gson.toJson(resp);
-                            
+
                             System.out.println("JSON for card upgrade: " + json);
-                            LOGGER.info("JSON for card upgrade: " + json);
-                            
+
                             JsonNode response = new Request(this.key).__post(url, json);
                             if (response != null) {
-                                LOGGER.info("upgrade: " + card.getName());
+                                System.out.println("Upgrade: " + card.getName());
                             } else {
                                 System.out.println("Failed to upgrade card with ID: \"" + card.getName() + "\"");
                             }
@@ -102,10 +105,9 @@ class Request {
                 } else {
                     System.out.println("The \"" + card.getName() + "\" is currently on cooldown. Time remaining: " + card.getCooldownSeconds() + ".");
                 }
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Critical error " + e.getMessage(), e);
             }
-        }catch (Exception e){
-            LOGGER.log(Level.SEVERE, "Critical error " + e.getMessage(), e);
         }
     }
 }
-
