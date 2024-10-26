@@ -16,7 +16,7 @@ class ReadKeyJson {
 
     public static String[] readJson(String pathFile) {
         try {
-            LOGGER.info("Чтение паролей JSON");
+            LOGGER.info("Reading JSON passwords");
 
             File file = new File(pathFile); // путь к файлу
             LOGGER.info("Path file: " + pathFile);

@@ -61,7 +61,7 @@ class FetchData {
             User.setEarnPassivePerSec(interludeUser.getFloat("earnPassivePerSec"));
             System.out.println("earnPassivePerSec: " + User.getEarnPassivePerSec());
         } else {
-            System.out.println("Ключ 'earnPassivePerSec' не найден в ответе.");
+            System.out.println("Key 'earnPassivePerSec' not found in the response.");
         }
     }
 

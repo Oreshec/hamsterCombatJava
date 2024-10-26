@@ -16,21 +16,21 @@ public class App {
         // Отправка запросов
         while (true) {
             try {
-                LOGGER.info("Перебор массива паролей");
+                LOGGER.info("Brute force through an array of passwords");
                 int minCooldown = 60;
                 for (String key : User.getAuthorization()) {
 
                     FetchData data = new FetchData(key);
                     Request req = new Request(key);
 
-                    LOGGER.info("Загрузка syncInfo");
+                    LOGGER.info("Loading syncInfo");
                     data.syncInfo();
                     LOGGER.info("Загрузка syncInfo прошла");
 
-                    LOGGER.info("Загрузка App.data.main(card.List())");
+                    LOGGER.info("Loading App.data.main(card.List())");
                     List<Card> cardList = data.cardList();
                     if (cardList == null || cardList.isEmpty()) {
-                        LOGGER.warning("cardList равен null или пуст для ключа: " + key);
+                        LOGGER.warning("cardList is null or empty for the key");
                         continue; // Пропуск текущей итерации и переход к следующему ключу
                     }
 
@@ -75,7 +75,7 @@ public class App {
                 long hours = (sleepTime / (1000 * 60 * 60)) % 24;
 
                 String formatedTime = String.format("H.%02d:M.%02d:S.%02d", hours, minute, second);
-                LOGGER.log(Level.INFO, "Сон на " + "\"" + formatedTime + "\"");
+                LOGGER.log(Level.INFO, "Sleep at " + "\"" + formatedTime + "\"");
 
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {

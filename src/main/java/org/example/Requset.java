@@ -19,7 +19,12 @@ class Request {
     // Выполнение POST запросов с опциональным телом
     private JsonNode __post(String url, String body) {
         try {
-            HttpResponse<JsonNode> response = Unirest.post(url).header("Content-Type", "application/json").header("User-Agent", "insomnia/10.0.0").header("Authorization", key).body(body != null ? body : "").asJson();
+            HttpResponse<JsonNode> response = Unirest.post(url)
+                    .header("Content-Type", "application/json")
+                    .header("User-Agent", "insomnia/10.0.0")
+                    .header("Authorization", key)
+                    .body(body != null ? body : "")
+                    .asJson();
 
             System.out.println("Status: " + response.getStatus() + " for " + url);
 
