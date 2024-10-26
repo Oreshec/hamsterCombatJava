@@ -1,33 +1,54 @@
 package org.example;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class App {
-    static boolean PRINT_INFO = true;
-
+    private static final Logger LOGGER = Logger.getLogger(App.class.getName());
+    static boolean PRINT_INFO = false;
 
     public static void main(String[] args) {
-
         // Инициализация и загрузка ключей из файла
         User.setAuthorization(ReadKeyJson.readJson("conf.json"));
-
         // Отправка запросов
         while (true) {
             try {
+                LOGGER.info("Перебор массива паролей");
+                int minCooldown = 60;
                 for (String key : User.getAuthorization()) {
+
                     FetchData data = new FetchData(key);
                     Request req = new Request(key);
-                    List<Card> cardList = data.cardList();
+
+                    LOGGER.info("Загрузка syncInfo");
                     data.syncInfo();
-                    List<Integer> minCooldown = new ArrayList<>();
+                    LOGGER.info("Загрузка syncInfo прошла");
+
+                    LOGGER.info("Загрузка App.data.main(card.List())");
+                    List<Card> cardList = data.cardList();
+                    if (cardList == null || cardList.isEmpty()) {
+                        LOGGER.warning("cardList равен null или пуст для ключа: " + key);
+                        continue; // Пропуск текущей итерации и переход к следующему ключу
+                    }
+
+                    LOGGER.info("App.main.cardList: " + cardList.stream().limit(5).toList());
+
+                    List<Integer> cooldownArr = new ArrayList<>();
                     for (Card card : cardList) {
-                        if (card.getCooldownSeconds() > 0) {
-                            minCooldown.add(card.getCooldownSeconds());
+                        if (card.getPrice() <= User.getBalanceDiamonds()) {
+                            cooldownArr.add(card.getCooldownSeconds());
                         }
                     }
-                    List<Integer> uniqueArray = minCooldown.stream().distinct().toList();
-                    System.out.println(uniqueArray);
+                    LOGGER.info("cooldownArr: " + cooldownArr);
+                    if (!cooldownArr.isEmpty()) {
+                        minCooldown = Collections.min(cooldownArr);
+                    } else {
+                        minCooldown = 60;
+                    }
+
                     if (PRINT_INFO) {
                         for (Card card : cardList) {
                             System.out.println("===CARD===");
@@ -41,20 +62,26 @@ public class App {
                             System.out.println("Max level: " + card.getMaxLevel());
                             System.out.println("Level: " + card.getLevel());
                             System.out.println("Payback period: " + card.getPayback());
-
-                            if (card.getCooldownSeconds() != 0) {
-                                minCooldown.add(card.getCooldownSeconds());
-                            }
+                            System.out.println("--------");
                         }
                     }
-                    System.out.println("--------");
-                    System.out.println(minCooldown);
                     req.UpgradeCard(cardList);
                 }
-                System.out.println("================\n");
-                Thread.sleep(60000);
+
+                int sleepTime = Math.min(minCooldown * 1000, 3 * 60 * 60 * 1000);
+
+                long second = (sleepTime / 1000) % 60;
+                long minute = (sleepTime / (1000 * 60)) % 60;
+                long hours = (sleepTime / (1000 * 60 * 60)) % 24;
+
+                String formatedTime = String.format("H.%02d:M.%02d:S.%02d", hours, minute, second);
+                LOGGER.log(Level.INFO, "Сон на " + "\"" + formatedTime + "\"");
+
+                Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "InterruptedException" + e.getMessage(), e);
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Critical damage!" + e.getMessage(), e);
             }
         }
     }

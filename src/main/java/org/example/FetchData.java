@@ -75,7 +75,7 @@ class FetchData {
 
         } catch (NullPointerException e) {
             LOGGER.log(Level.SEVERE, "null data" + e.getMessage(), e);
-        }catch (Exception e){
+        } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Unknown error" + e.getMessage(), e);
         }
 
@@ -98,7 +98,7 @@ class FetchData {
                     .limit(5)
                     .collect(Collectors.toList());
         } catch (JsonSyntaxException e) {
-            System.out.println("Error parsing card list" + e);
+            LOGGER.log(Level.SEVERE, "Error parsing card list" + e.getMessage(), e);
             return List.of();  // Return empty list in case of error
         }
     }
