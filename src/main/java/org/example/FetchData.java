@@ -77,6 +77,7 @@ class FetchData {
             System.out.println("Ключ 'upgradesForBuy' не найден в ответе.");
             return List.of();  // Return an empty list instead of null
         }
+        LOGGER.info("cardList upgradeArr:" + upgradeArr);
         return parseAndFilterCards(upgradeArr);
     }
 
